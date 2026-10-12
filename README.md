@@ -94,18 +94,7 @@ The desktop app searches all drives for the recorder folder when it starts, and 
 
 ## Using the viewer
 
-```
-┌──────┬──────────────────────┬──────────────────────────────┬────┐
-│  ▣   │ Today                │                              │ ◉  │ Front
-│      │ ▢ 4:38 PM  2 sec     │                              │ ○  │ Rear
-│  ⚙   │ ▢ 4:24 PM  14 min ◀──│        video player          │ ○  │ Left
-│      │ ▢ 3:44 PM  4 min     │                              │ ○  │ Right
-│      │                      │                              │ ○  │ Cabin
-│      │                      │ ━━━━━━━──────────  2:55/14:08│ ○  │ All four
-├──────┴──────────────────────┴──────────────────────────────┴────┤
-│ open scan files ◀◀ ▶▶ ⛶ │ -10 ▶ +10 1× snap save │ D 4:39       │
-└─────────────────────────────────────────────────────────────────┘
-```
+![Screenshot of the Surround Vision Viewer showing the recordings list, video player, camera controls, and playback bar](screenshots/using-the-viewer.png)
 
 - **Left rail**: switch between the recordings list and settings.
 - **Recordings list**: tap a recording to start playing it. The selected recording is shown in amber.
