@@ -1,0 +1,64 @@
+{
+  "name": "surroundviewviewer",
+  "productName": "Surround Vision Viewer",
+  "version": "0.1.0",
+  "description": "Viewer for GM Surround Vision Recorder clips, styled after the Cadillac infotainment UI.",
+  "author": "Patrick Coco",
+  "license": "MIT",
+  "homepage": "https://pvcoco.github.io/Surround-Vision-Viewer/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pvcoco/Surround-Vision-Viewer.git"
+  },
+  "type": "module",
+  "main": "electron/main.cjs",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "electron": "npm run build && electron .",
+    "dist": "npm run build && electron-builder",
+    "dist:win": "npm run build && electron-builder --win",
+    "dist:mac": "npm run build && electron-builder --mac",
+    "dist:linux": "npm run build && electron-builder --linux"
+  },
+  "build": {
+    "appId": "com.pvcoco.surroundviewviewer",
+    "productName": "Surround Vision Viewer",
+    "files": [
+      "dist/**",
+      "electron/**",
+      "package.json"
+    ],
+    "directories": {
+      "output": "release"
+    },
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ]
+    },
+    "mac": {
+      "target": [
+        "dmg"
+      ],
+      "category": "public.app-category.video"
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "category": "Video"
+    }
+  },
+  "devDependencies": {
+    "electron": "^44.7.0",
+    "electron-builder": "^26.15.3",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.4",
+    "vitest": "^5.0.4"
+  }
+}
