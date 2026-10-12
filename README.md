@@ -28,10 +28,11 @@ Newer GM vehicles built on the Ultifi platform (for example the Cadillac VISTIQ)
 ## Features
 
 - **Car-style interface**: dark glass look, amber accents, round camera buttons and the blue control bar, laid out like the in-vehicle recordings screen. On phones it rearranges into a portrait layout.
-- **Recordings list** grouped by day ("Today", "Yesterday", dates), with a thumbnail, start time and length for each recording.
+- **Recordings list** with a selectable day heading ("Today", "Yesterday", dates), previous/next recorded-day buttons, and a calendar highlighting days with footage. Show all recordings to browse the complete list.
 - **Seamless multi-segment playback**: the recorder's 5-minute pieces play back as one continuous recording with a single timeline (for example `2:55 / 14:08`). Segment boundaries show as small ticks.
 - **Camera switching** between front, rear, left and right, staying at the same moment in time. A cabin camera is supported if the vehicle records one.
 - **Four-up view** shows all four surround cameras at once, kept in sync.
+- **Surround 360°** projects the four exterior cameras onto a shared ground plane around a vehicle. Drag to orbit, scroll to zoom, choose a top-down or 3D angle, and tune the saved camera calibration for your vehicle.
 - **Playback controls**: drag to scrub, jump ±10 s, speeds from 0.25× to 8×, full screen.
 - **Export**: save a PNG snapshot of the current frame (or the full 2×2 grid), or save the original MP4 file for the current segment.
 - **Finds the drive automatically** in the desktop app, whatever drive letter or mount point the flash drive gets, and notices when it's plugged in.
@@ -98,11 +99,15 @@ The desktop app searches all drives for the recorder folder when it starts, and 
 
 - **Left rail**: switch between the recordings list and settings.
 - **Recordings list**: tap a recording to start playing it. The selected recording is shown in amber.
+- **Day heading**: click "Today" (or the displayed date) to open the calendar. Highlighted dates have recordings; use the arrows to move between recorded days, or choose **Show all recordings**. Browsing a different day keeps the current playback running until you choose another recording.
 - **Player**: click the video to play or pause; double-click for full screen.
-- **Camera buttons** (right column): switch camera without losing your place. The bottom button toggles the four-camera grid. Buttons are dimmed for cameras missing from that recording.
+- **Camera buttons** (right column): switch camera without losing your place. The grid button toggles the four-camera view; the circular vehicle button opens Surround 360°. Buttons are dimmed for cameras missing from that recording.
+- **Surround 360° button** (circular vehicle icon): toggle the projected surround view. Drag the ground to orbit, scroll to zoom, and double-click to reset to top down. The angle selector offers Top down, 3D front, 3D chase, and 3D quarter; the style selector offers Factory, Tactical, and Cinematic.
+- **Surround calibration** (gear inside the surround view): choose **2025 Chevrolet Tahoe Z71** for the original GMSurroundVision settings or **2026 Cadillac VISTIQ** for the settings tuned using VISTIQ recordings. Adjust each camera's horizon crop, vehicle body trim, position, distance, depth, widths, blending, and lens correction. Isolate one camera while tuning or save up to four custom presets. Each vehicle's adjustments persist separately on this device; **Reset calibration** restores the selected vehicle's built-in values. New installations start with the VISTIQ profile. See [calibration details](docs/surround-calibration.md). The projection assumes flat ground and is an approximation; it is unsuitable for measuring distances. Devices without WebGL use a CSS projection without lens correction.
 - **Timeline**: click or drag anywhere to jump; it covers the whole recording, across segments.
 - **Left control bar**: open a drive or folder, rescan drives, pick individual files, previous/next recording, full screen.
 - **Right control bar**: back 10 s, play/pause, forward 10 s, playback speed, save snapshot, save the original video file.
+- **Surround snapshots** save the composed top-down ground view with the current calibration, vehicle, and guides. Saving original video files in either composite view downloads the four exterior camera files for the current segment.
 - **Status area**: the source drive (for example `D`) and the current time.
 
 ### Keyboard shortcuts
@@ -115,6 +120,7 @@ The desktop app searches all drives for the recorder folder when it starts, and 
 | `↑` / `↓` | Newer / older recording |
 | `1`–`5` | Front, rear, left, right, cabin camera |
 | `Q` | Toggle four-camera view |
+| `Y` | Toggle Surround 360° view |
 | `[` / `]` | Slower / faster |
 | `Home` | Jump to the start |
 | `S` | Save snapshot |
@@ -220,3 +226,5 @@ The builds aren't code-signed, so Windows SmartScreen and macOS Gatekeeper will 
 ## License
 
 [MIT](LICENSE) © Patrick Coco
+
+The Surround 360 projection is adapted from [GMSurroundVision](https://github.com/absginc/GMSurroundVision) by ABSG Inc., also under the MIT license. See [third-party notices](THIRD_PARTY_NOTICES.md).

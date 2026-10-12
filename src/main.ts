@@ -2,6 +2,8 @@ import "./styles.css";
 import { icons, type IconName } from "./icons";
 import { readMp4Duration } from "./mp4";
 import { Player } from "./player";
+import { DayPicker } from "./day-picker";
+import { eventsOnDay, recordingDay } from "./recording-days";
 import {
   CAMERAS,
   buildSegments,
@@ -61,6 +63,7 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
     ${btn("rail-btn", "gear", "Settings", 'data-view="settings"')}
   </nav>
   <section class="library">
+    <div class="day-picker" id="day-picker"></div>
     <div class="event-list" id="events"></div>
     <div class="settings hidden" id="settings"></div>
   </section>
@@ -79,6 +82,7 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
   <aside class="cams" id="cams">
     ${CAMERAS.map((c) => btn("ring cam", CAMERA_ICONS[c], `${c[0]}${c.slice(1).toLowerCase()} camera`, `data-cam="${c}"`)).join("")}
     ${btn("ring cam", "quad", "All four cameras", 'data-cam="QUAD"')}
+    ${btn("ring cam", "surround", "Surround 360° (Y)", 'data-cam="SURROUND"')}
   </aside>
   <footer class="dock">
     <div class="dock-left">
@@ -124,6 +128,7 @@ const dirInput = $<HTMLInputElement>("#dir-input");
 const fileInput = $<HTMLInputElement>("#file-input");
 
 const player = new Player(viewport);
+const dayPicker = new DayPicker($("#day-picker"), () => renderList());
 
 // ---------------------------------------------------------------- loading
 
@@ -143,7 +148,7 @@ async function useSource(loaded: LoadedSource, nativeDir?: RecorderDir) {
   renderAll();
   await probeDurations(segments);
   busy = "";
-  regroup();
+  regroup(true);
   if (events[0]) select(events[0], false);
 }
 
@@ -169,9 +174,10 @@ async function videoDuration(file: RecFile): Promise<number> {
   });
 }
 
-function regroup() {
+function regroup(resetDay = false) {
   const keep = selected ? { start: selected.start.getTime() + player.time * 1000 } : null;
   events = groupEvents(segments, settings.mergeGap);
+  dayPicker.update(events, resetDay);
   renderList();
   if (keep) {
     const ev = events.find((e) => keep.start >= e.start.getTime() && keep.start <= e.start.getTime() + e.duration * 1000);
@@ -239,6 +245,7 @@ function renderAll() {
 
 function renderList() {
   listEl.classList.toggle("hidden", view !== "recordings");
+  $("#day-picker").classList.toggle("hidden", view !== "recordings" || !!busy || !events.length);
   if (busy) {
     listEl.innerHTML = `<div class="empty"><div class="spinner"></div><p>${busy}</p></div>`;
     return;
@@ -256,9 +263,9 @@ function renderList() {
   }
   listEl.innerHTML = "";
   let lastDay = "";
-  for (const ev of events) {
+  for (const ev of eventsOnDay(events, dayPicker.day)) {
     const day = dayLabel(ev.start);
-    if (day !== lastDay) {
+    if (dayPicker.day === null && day !== lastDay) {
       lastDay = day;
       const h = document.createElement("div");
       h.className = "day-header";
@@ -351,7 +358,7 @@ function renderSettings() {
     </label>
     <div class="setting keys">
       <div class="label">Keyboard</div>
-      <div class="sub">Space play/pause · ←/→ 5 s · J/L 10 s · ↑/↓ recordings · 1–5 cameras · Q all cameras · [ ] speed · S snapshot · F full screen</div>
+      <div class="sub">Space play/pause · ←/→ 5 s · J/L 10 s · ↑/↓ recordings · 1–5 cameras · Q all cameras · Y Surround 360° · [ ] speed · S snapshot · F full screen</div>
     </div>`;
   const update = () => {
     const gap = Number($<HTMLSelectElement>("#set-gap").value);
@@ -373,12 +380,15 @@ function renderState() {
   const cams = selected ? camerasIn(selected) : new Set<Camera>();
   for (const el of document.querySelectorAll<HTMLButtonElement>(".cam")) {
     const cam = el.dataset.cam!;
-    const available = cam === "QUAD" ? cams.size > 1 : cams.has(cam as Camera);
+    const available = cam === "QUAD" || cam === "SURROUND" ? ["FRONT", "REAR", "LEFT", "RIGHT"].some((c) => cams.has(c as Camera)) : cams.has(cam as Camera);
     el.disabled = !available;
-    el.classList.toggle("active", cam === "QUAD" ? player.quad : !player.quad && player.camera === cam);
+    const active = cam === "QUAD" ? player.quad : cam === "SURROUND" ? player.surround : !player.composite && player.camera === cam;
+    el.classList.toggle("active", active);
+    el.setAttribute("aria-pressed", String(active));
   }
   playBtn.innerHTML = player.playing ? icons.pause : icons.play;
   playBtn.title = player.playing ? "Pause" : "Play";
+  playBtn.setAttribute("aria-label", playBtn.title);
   playBtn.classList.toggle("active", player.playing);
   rateBtn.textContent = `${player.rate}×`;
   rateBtn.classList.toggle("active", player.rate !== 1);
@@ -427,7 +437,11 @@ function renderClock() {
 async function select(ev: RecEvent, autoplay: boolean, at = 0) {
   selected = ev;
   const cams = camerasIn(ev);
-  if (!player.quad && !cams.has(player.camera)) player.camera = cams.has(settings.startCamera) ? settings.startCamera : [...cams][0];
+  if (!player.composite && !cams.has(player.camera)) player.camera = cams.has(settings.startCamera) ? settings.startCamera : [...cams][0];
+  if (dayPicker.day !== null && !eventsOnDay([ev], dayPicker.day).length) {
+    dayPicker.follow(recordingDay(ev.start));
+    renderList();
+  }
   markSelected();
   renderMarks();
   renderState();
@@ -437,8 +451,9 @@ async function select(ev: RecEvent, autoplay: boolean, at = 0) {
 
 function step(delta: number) {
   if (!selected) return;
-  const i = events.indexOf(selected);
-  const next = events[i + delta];
+  const visible = eventsOnDay(events, dayPicker.day);
+  const i = visible.indexOf(selected);
+  const next = i < 0 ? visible[0] : visible[i + delta];
   if (next) select(next, player.playing);
 }
 
@@ -467,6 +482,11 @@ function download(href: string, name: string) {
 
 function snapshot() {
   if (!selected) return;
+  if (player.surround) {
+    const canvas = player.surroundView.snapshot();
+    if (!canvas) return toast("Surround snapshots require WebGL on this device.");
+    return saveSnapshot(canvas, "SURROUND");
+  }
   const frames = player.visibleVideos().filter((f) => f.video.readyState >= 2);
   if (!frames.length) return;
   const w = frames[0].video.videoWidth;
@@ -479,6 +499,10 @@ function snapshot() {
   const ctx = canvas.getContext("2d")!;
   frames.forEach((f, i) => ctx.drawImage(f.video, (i % cols) * w, Math.floor(i / cols) * h, w, h));
   const label = player.quad ? "ALL" : player.camera;
+  saveSnapshot(canvas, label);
+}
+
+function saveSnapshot(canvas: HTMLCanvasElement, label: string) {
   canvas.toBlob((blob) => {
     if (!blob) return;
     const url = URL.createObjectURL(blob);
@@ -490,7 +514,7 @@ function snapshot() {
 async function saveFile() {
   const seg = player.segment;
   if (!seg) return;
-  const cams = player.quad ? (["FRONT", "REAR", "LEFT", "RIGHT"] as Camera[]) : [player.camera];
+  const cams = player.composite ? (["FRONT", "REAR", "LEFT", "RIGHT"] as Camera[]) : [player.camera];
   for (const cam of cams) {
     const file = seg.files[cam];
     if (file) download(await file.url(), file.name);
@@ -524,6 +548,7 @@ document.addEventListener("click", (e) => {
   if (el.dataset.act) actions[el.dataset.act]?.();
   else if (el.dataset.cam) {
     if (el.dataset.cam === "QUAD") player.setQuad(!player.quad);
+    else if (el.dataset.cam === "SURROUND") player.setSurround(!player.surround);
     else player.setCamera(el.dataset.cam as Camera);
   } else if (el.dataset.view) {
     view = el.dataset.view as typeof view;
@@ -533,7 +558,10 @@ document.addEventListener("click", (e) => {
   }
 });
 
-viewport.addEventListener("click", () => selected && player.toggle());
+viewport.addEventListener("click", () => {
+  if (player.surround && player.surroundView.consumesClick()) return;
+  if (selected) player.toggle();
+});
 viewport.addEventListener("dblclick", toggleFullscreen);
 
 dirInput.addEventListener("change", () => {
@@ -601,7 +629,9 @@ window.addEventListener("drop", async (e) => {
 });
 
 window.addEventListener("keydown", (e) => {
-  if ((e.target as HTMLElement).closest("input, select, textarea") || e.ctrlKey || e.metaKey || e.altKey) return;
+  const target = e.target as HTMLElement;
+  if (target.closest("input, select, textarea, .day-picker, .surround-drawer") || e.ctrlKey || e.metaKey || e.altKey) return;
+  if ((e.key === " " || e.key === "Enter") && target.closest("button")) return;
   const k = e.key;
   const handled = (() => {
     if (k === " " || k === "k" || k === "K") return actions.play();
@@ -618,6 +648,7 @@ window.addEventListener("keydown", (e) => {
       return;
     }
     if (k === "q" || k === "Q") return selected && player.setQuad(!player.quad);
+    if (k === "y" || k === "Y") return selected && player.setSurround(!player.surround);
     if (k === "f" || k === "F") return toggleFullscreen();
     if (k === "s" || k === "S") return snapshot();
     if (k === "[" || k === "]") {
@@ -633,7 +664,8 @@ player.onTime = (t) => !scrubbing && renderTime(t);
 player.onState = renderState;
 player.onEnded = () => {
   if (!settings.autoAdvance || !selected) return;
-  const newer = events[events.indexOf(selected) - 1];
+  const visible = eventsOnDay(events, dayPicker.day);
+  const newer = visible[visible.indexOf(selected) - 1];
   if (newer) select(newer, true);
 };
 

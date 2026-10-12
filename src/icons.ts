@@ -4,6 +4,7 @@ const svg = (body: string, extra = "") =>
   `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"${extra}>${body}</svg>`;
 
 export const icons = {
+  surround: svg(`<rect x="9" y="7" width="6" height="10" rx="2"/><path d="M6 5a9 9 0 1 0 12 0M4 5h3v3M17 8V5h3"/><path d="M10 10h4M10 14h4"/>`),
   // Camera body with the flared lens pointing toward the view direction.
   front: svg(`<rect x="8.5" y="9.5" width="7" height="11" rx="1"/><path d="M8 3.5h8l-2 6h-4z"/>`),
   rear: svg(`<rect x="8.5" y="3.5" width="7" height="11" rx="1"/><path d="M8 20.5h8l-2-6h-4z"/>`),

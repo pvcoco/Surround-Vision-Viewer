@@ -1,0 +1,47 @@
+.viewport.surround { background: radial-gradient(ellipse at center, #162033, #04070d 75%); cursor: grab; }
+.viewport.surround > .tile { opacity: 0; pointer-events: none; }
+.surround-scene { position: absolute; inset: 0; overflow: hidden; touch-action: none; z-index: 2; }
+.surround-scene:active { cursor: grabbing; }
+.surround-rig { position: absolute; top: 50%; left: 50%; transform-style: preserve-3d; transform-origin: center; }
+.surround-ground, .surround-canvas { position: absolute; inset: 0; width: 100%; height: 100%; border-radius: 6px; }
+.surround-ground { box-shadow: 0 12px 45px #0007; }
+.surround-canvas { transform: translateZ(.1px); }
+.surround-vehicle { position: absolute; top: 50%; left: 50%; object-fit: contain; transform: translate(-50%,-50%) translateZ(2px); filter: drop-shadow(0 4px 12px #000b); z-index: 3; pointer-events: none; }
+.surround-guides { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%) translateZ(1px); border: 1px dashed #ffb369aa; border-radius: 20%; pointer-events: none; }
+.surround-toolbar { position: absolute; top: 10px; left: 10px; right: 10px; display: flex; gap: 6px; align-items: center; pointer-events: auto; }
+.surround-toolbar select, .surround-drawer select { font: inherit; font-size: 12px; border: 1px solid #485469; border-radius: 6px; background: #0a1424ee; color: var(--text); padding: 7px 9px; min-width: 0; }
+.surround-toolbar button { width: 32px; height: 32px; padding: 6px; background: #0a1424ee; border: 1px solid #485469; border-radius: 6px; margin-left: auto; }
+.surround-toolbar button[aria-expanded=true] { color: var(--amber); border-color: var(--amber); }
+.surround-readout { position: absolute; bottom: 10px; left: 10px; color: #c4cbd5; background: #050b16cc; padding: 5px 8px; border-radius: 4px; font-size: 11px; pointer-events: none; }
+.surround-fallback-note { position: absolute; bottom: 10px; right: 10px; color: var(--amber); font-size: 11px; max-width: 45%; text-align: right; }
+.surround-scene[data-style=tactical] .surround-ground { background-image: linear-gradient(#8db9b51a 1px,transparent 1px),linear-gradient(90deg,#8db9b51a 1px,transparent 1px); background-size: 24px 24px; }
+.surround-scene[data-style=tactical] .surround-guides { border-radius: 3px; border-color: #a0c9c8; }
+.surround-scene[data-style=cinematic]::after { content: ''; position: absolute; inset: 0; box-shadow: inset 0 0 80px 25px #000b; pointer-events: none; }
+.surround-scene[data-style=cinematic] .surround-readout { display: none; }
+.surround-toolbar, .surround-drawer { z-index: 5; }
+.surround-drawer { position: absolute; top: 0; bottom: 0; right: 0; width: min(300px,100%); background: #0c1628f7; border-left: 1px solid var(--line); padding: 14px; overflow-y: auto; cursor: default; touch-action: pan-y; box-shadow: -8px 0 24px #0008; }
+.surround-drawer-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 16px; }
+.surround-close { width: 30px; height: 30px; font-size: 25px; }
+.surround-drawer p { font-size: 12px; line-height: 1.45; color: var(--muted); margin: 10px 0 14px; }
+.surround-calibration-camera { width: 100%; }
+.surround-profile-label { display: block; font-size: 12px; margin-top: 14px; }
+.surround-vehicle-profile { display: block; width: 100%; margin-top: 6px; }
+.surround-check { display: flex; align-items: center; gap: 8px; font-size: 12px; margin: 12px 0; }
+.surround-check input { accent-color: var(--amber); }
+.surround-slider { display: block; margin-top: 10px; font-size: 12px; }
+.surround-slider span { display: flex; justify-content: space-between; gap: 10px; }
+.surround-slider output { font-variant-numeric: tabular-nums; color: var(--amber); }
+.surround-slider input { width: 100%; margin: 7px 0 0; accent-color: var(--amber); }
+.surround-drawer h4 { font-size: 13px; font-weight: 500; border-top: 1px solid var(--line); padding-top: 14px; margin: 18px 0 8px; }
+.surround-slot { width: 100%; }
+.surround-preset-actions { display: flex; gap: 8px; margin-top: 8px; }
+.surround-preset-actions button, .surround-reset { flex: 1; padding: 8px 10px; font-size: 12px; border: 1px solid var(--line); border-radius: 6px; }
+.surround-reset { width: 100%; }
+.surround-preset-actions button:hover, .surround-reset:hover { border-color: var(--amber); color: var(--amber); }
+.surround-plane { position: absolute; top: 0; left: 0; overflow: hidden; transform-origin: 0 0; }
+.surround-plane .tile { display: block; width: 100%; bottom: auto; background: #111722; }
+.surround-plane .tile video { object-fit: fill; }
+.surround-plane .tile-label { display: none; }
+.surround-plane .tile-missing { font-size: 11px; }
+@media (max-height: 700px) and (min-width: 901px) { .cams { gap: 8px; padding-top: 15px; } .cams .ring { width: 46px; height: 46px; } }
+@media (max-width: 900px) { .cams { gap: 6px; } .cams .ring { width: 40px; height: 40px; } .surround-toolbar { top: 7px; left: 7px; right: 7px; } .surround-toolbar select { padding: 5px; font-size: 11px; } .surround-readout { font-size: 10px; } }

@@ -3,6 +3,7 @@
 // cameras is instant; in quad view the surround cameras play together, slaved to a clock.
 
 import { CAMERAS, SURROUND, locate, type Camera, type RecEvent } from "./recordings";
+import { SurroundView } from "./surround";
 
 const DRIFT_TOLERANCE = 0.25;
 
@@ -12,6 +13,8 @@ export class Player {
   segIndex = 0;
   camera: Camera = "FRONT";
   quad = false;
+  surround = false;
+  readonly surroundView: SurroundView;
   playing = false;
   rate = 1;
   /** Fired with the event-relative time whenever it changes. */
@@ -48,6 +51,7 @@ export class Player {
       v.addEventListener("timeupdate", () => v === this.clock() && this.syncFollowers());
       this.videos[cam] = v;
     }
+    this.surroundView = new SurroundView(host, this.videos, (cam) => !this.segment?.files[cam]);
     this.layout();
   }
 
@@ -55,11 +59,13 @@ export class Player {
     return this.event?.segments[this.segIndex] ?? null;
   }
 
+  get composite() { return this.quad || this.surround; }
+
   /** The video whose currentTime drives the timeline for the current segment. */
   clock(): HTMLVideoElement {
     const files = this.segment?.files ?? {};
-    if (!this.quad && files[this.camera]) return this.videos[this.camera];
-    const cam = (this.quad ? SURROUND : CAMERAS).find((c) => files[c]) ?? CAMERAS.find((c) => files[c]) ?? "FRONT";
+    if (!this.composite && files[this.camera]) return this.videos[this.camera];
+    const cam = (this.composite ? SURROUND : CAMERAS).find((c) => files[c]) ?? CAMERAS.find((c) => files[c]) ?? "FRONT";
     return this.videos[cam];
   }
 
@@ -134,8 +140,9 @@ export class Player {
 
   private active(): HTMLVideoElement[] {
     const files = this.segment?.files ?? {};
-    if (!this.quad) return [this.clock()];
-    return SURROUND.filter((c) => files[c]).map((c) => this.videos[c]);
+    if (!this.composite) return [this.clock()];
+    const active = SURROUND.filter((c) => files[c]).map((c) => this.videos[c]);
+    return active.length ? active : [this.clock()];
   }
 
   play() {
@@ -195,12 +202,21 @@ export class Player {
     const wasPlaying = this.playing;
     this.camera = cam;
     this.quad = false;
+    this.surround = false;
     this.handover(before, wasPlaying);
   }
 
   setQuad(on: boolean) {
     const before = this.clock();
     this.quad = on;
+    this.surround = false;
+    this.handover(before, this.playing);
+  }
+
+  setSurround(on: boolean) {
+    const before = this.clock();
+    this.surround = on;
+    this.quad = false;
     this.handover(before, this.playing);
   }
 
@@ -217,7 +233,7 @@ export class Player {
   }
 
   private syncFollowers() {
-    if (!this.quad || !this.playing) return;
+    if (!this.composite || !this.playing) return;
     const clock = this.clock();
     for (const v of this.active()) {
       if (v === clock || v.readyState < 1) continue;
@@ -229,9 +245,16 @@ export class Player {
   private layout() {
     const files = this.segment?.files ?? {};
     this.host.classList.toggle("quad", this.quad);
+    this.host.classList.toggle("surround", this.surround);
+    this.surroundView.setVisible(this.surround && !!this.event);
     for (const cam of CAMERAS) {
       const tile = this.videos[cam].parentElement!;
-      const visible = this.quad ? SURROUND.includes(cam) : cam === this.camera;
+      const visible = this.composite ? SURROUND.includes(cam) : cam === this.camera;
+      // CSS fallback temporarily moves tiles into projected planes.
+      if (!this.surround || tile.parentElement === this.host) {
+        tile.style.height = "";
+        tile.style.top = "";
+      }
       tile.classList.toggle("visible", visible && !!this.event);
       tile.classList.toggle("missing", !!this.event && !files[cam]);
     }
@@ -252,7 +275,7 @@ export class Player {
 
   /** Visible frames for snapshots: one in single view, the 2x2 grid in quad view. */
   visibleVideos(): { cam: Camera; video: HTMLVideoElement }[] {
-    const cams = this.quad ? SURROUND : [this.camera];
+    const cams = this.composite ? SURROUND : [this.camera];
     return cams.map((cam) => ({ cam, video: this.videos[cam] }));
   }
 }
